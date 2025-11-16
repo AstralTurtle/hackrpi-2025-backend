@@ -109,7 +109,8 @@ async def websocket_endpoint(websocket: WebSocket, game_code: str):
 
                 if action == "build":
                     line = data_dict["line"]
-                    await game.get_line_by_name(line).build_station()
+                    id = data_dict["id"]
+                    await game.get_line_by_name(line).build_station(id)
 
                 if action == "end_turn":
                     player.end_turn = True
