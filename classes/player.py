@@ -16,7 +16,6 @@ class Player:
             "money": self.money,
         }
 
-
     # def addLine(self, line):
     #     if self.money < line.price:
     #         print("not enough money")
@@ -25,10 +24,8 @@ class Player:
     #     self.lines.append(line.name)
     #     line.bought = True
 
-        # if line.owner != None:
-        #     if higerbid():
-        #         pass
+    # if line.owner != None:
+    #     if higerbid():
+    #         pass
 
-        # pass
-
-
+    # pass

@@ -1,7 +1,5 @@
 import json
 import random
-import re
-import select
 from typing_extensions import Dict
 from pathlib import Path
 from classes.player import Player
@@ -11,8 +9,8 @@ class Station:
     def __init__(self, name: str):
         self.owner: Player | None = None
         self.built = False
-        self.price = round(random.uniform(1, 10),1)
-        self.profit = round(random.uniform(1,4),1)
+        self.price = round(random.uniform(1, 10), 1)
+        self.profit = round(random.uniform(1, 4), 1)
         self.name = name
         self.year = 0
 
@@ -24,7 +22,7 @@ class Station:
             raise ValueError("Station has no owner")
         self.owner.money -= self.cost
         self.built = True
-    
+
     def serialize(self):
         return {
             "name": self.name,
@@ -32,15 +30,14 @@ class Station:
             "built": self.built,
             "cost": self.cost,
             "profit": self.profit,
-            "year": self.year
+            "year": self.year,
         }
-
 
 
 class Line:
     def __init__(self, name: str):
         self.name = name
-        self.stations:Dict[str, Station] = dict()
+        self.stations: Dict[str, Station] = dict()
         self.owner: Player | None = None
         self.price = 0
         self.bought = False
@@ -49,18 +46,18 @@ class Line:
     def serialize(self):
         return {
             "name": self.name,
-            "stations" : self.stations,
+            "stations": self.stations,
             "owner": self.owner,
             "price": self.price,
             "bought": self.bought,
             "active": self.active,
-
         }
 
     def bidLine(self, bidder, bid_amount):
-        if bid_amount > self.price - 0.:
+        if bid_amount > self.price - 0.0:
             raise ValueError(
-                f"Bid amount {bid_amount} is less than the current price {self.price} for line {self.name}")
+                f"Bid amount {bid_amount} is less than the current price {self.price} for line {self.name}"
+            )
         self.owner = bidder
         self.price = bid_amount
 
@@ -82,7 +79,6 @@ class Line:
                 total_profit[owner] = int(total_profit[owner] * 1.2)
 
         return total_profit
-
 
     def changeOwner(self, new_owner):
         self.owner = new_owner

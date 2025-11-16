@@ -1,9 +1,11 @@
 from fastapi import WebSocket
+
+
 class Lobby:
     def __init__(self):
         self.unassigned: list[WebSocket] = []
-        self.irt : WebSocket | None = None
-        self.bmt : WebSocket | None = None
+        self.irt: WebSocket | None = None
+        self.bmt: WebSocket | None = None
 
     def change_team(self, player: WebSocket, joinIRT: bool):
         if self.irt is None and joinIRT:
@@ -21,11 +23,5 @@ class Lobby:
                 self.irt = None
                 self.bmt = player
 
-            
     def can_start(self):
-        return not self.irt is None and not self.bmt is None
-                
-
-                
-        
-        
+        return self.irt is not None and self.bmt is not None

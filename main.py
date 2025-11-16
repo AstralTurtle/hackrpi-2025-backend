@@ -25,9 +25,6 @@ app.add_middleware(
 )
 
 
-
-
-
 if __name__ == "__main__":
     LOGGING_CONFIG["formatters"]["default"]["fmt"] = (
         "%(asctime)s - %(levelname)s - %(message)s"

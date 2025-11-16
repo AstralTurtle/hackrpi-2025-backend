@@ -2,7 +2,6 @@ import enum
 import json
 import uuid
 
-from fastapi import WebSocket
 from typing_extensions import Dict
 
 from classes.lines import Station, lines
@@ -10,11 +9,11 @@ from classes.lobby import Lobby
 from classes.player import Player
 
 
-
 class GameState(enum.Enum):
     Lobby = 1
     Active = 2
     Finished = 3
+
 
 class Game:
     def __init__(self):
@@ -33,33 +32,29 @@ class Game:
         self.lines = []
         self.contracts = []
 
-
     def start_game(self):
         self.state = GameState.Active
         self.players["IRT"].WebSocket = self.lobby.irt
         self.players["BMT"].WebSocket = self.lobby.bmt
-        #initalize lines
+        # initalize lines
 
         self.lobby = None
         self.state = GameState.Active
-    
-    async def end_game(self) :
+
+    async def end_game(self):
         win = {"action": "win", "team": "tie"}
         if self.players["IRT"].money > self.players["BMT"].money:
             win["team"] = "IRT"
         elif self.players["IRT"].money < self.players["BMT"].money:
             win["team"] = "BMT"
         await self.broadcast(json.dumps(win))
-        
+
         self.players["IRT"].WebSocket.close()
         self.players["BMT"].WebSocket.close()
         self.players["IRT"].WebSocket = None
         self.players["BMT"].WebSocket = None
 
-
         del games[self.code]
-        
-
 
     def serialize(self):
         return {
@@ -67,7 +62,7 @@ class Game:
             "year": self.year,
             "turn": self.turn,
             "contracts": self.contracts,
-            "lines": self.lines
+            "lines": self.lines,
         }
 
     def get_player(self, player: str) -> Player:
@@ -91,31 +86,37 @@ class Game:
         self.turn += 1
         if self.turn > 7:
             self.end_game()
-        if self.turn<3: #before 4th
+        if self.turn < 3:  # before 4th
             for line in self.lines:
-                if line.year>(self.turn+1*10)+1880 and line.year>(self.turn*10)+1880:
-                    lines+= line
+                if (
+                    line.year > (self.turn + 1 * 10) + 1880
+                    and line.year > (self.turn * 10) + 1880
+                ):
+                    lines += line
                     self.contracts += line
-        else: #after 4th
+        else:  # after 4th
             for line in self.lines:
-                if line.year>(self.turn+1*10)+1880 and line.year>(self.turn*10)+1880:
-                    lines+= line
+                if (
+                    line.year > (self.turn + 1 * 10) + 1880
+                    and line.year > (self.turn * 10) + 1880
+                ):
+                    lines += line
                     for station in line.stations.value():
-                        self.contracts += station 
-        
+                        self.contracts += station
+
     def bid(obj, bidder, bid_amount):
         if bid_amount < obj.price:
             raise ValueError(
-                f"Bid amount {bid_amount} is less than the current price {obj.price} for line {obj.name}")
+                f"Bid amount {bid_amount} is less than the current price {obj.price} for line {obj.name}"
+            )
         obj.owner = bidder
         obj.price = bid_amount
 
     # calculate profits and finish bids
     def nextYear(self) -> None:
         for player in self.players.values():
-            if player.WebSocket is not None and not player.end_turn:   
+            if player.WebSocket is not None and not player.end_turn:
                 return
-        
 
         active_lines = (ln for ln in lines.values() if ln.active)
 
@@ -125,16 +126,14 @@ class Game:
             for k, v in tp.items():
                 total_profit[k] += v
 
-        for k,v in total_profit.items():
+        for k, v in total_profit.items():
             self.players[k].money += v
-
 
         self.year += 1
 
         if self.year % 10 == 0:
             self.nextTurn()
 
-        
         for player in self.players.values():
             player.end_turn = False
 
@@ -148,13 +147,10 @@ class Game:
                     ret.append(station)
         return ret
 
-
-    async def broadcast(self, message:str) -> None:
+    async def broadcast(self, message: str) -> None:
         for player in self.players.values():
             if player.WebSocket is not None:
                 await player.WebSocket.send_text(message)
-        
-    
 
 
 games: Dict[str, Game] = {}
