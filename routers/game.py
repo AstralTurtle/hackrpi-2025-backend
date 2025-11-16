@@ -97,8 +97,9 @@ async def websocket_endpoint(websocket: WebSocket, game_code: str):
 				await websocket.send_text(f"Message text was: {data}")
 
 				if action == "bid":
-					line = data_dict["line"]
-					lines[line].bidLine(player, data_dict["amount"])
+#modify to be able to use any object
+					bid = data_dict["bid"]
+					game.bid(bid, player, data_dict["amount"])
 
 				if action == "build":
 					line = data_dict["line"]
