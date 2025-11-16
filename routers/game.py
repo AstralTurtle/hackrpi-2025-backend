@@ -1,7 +1,9 @@
+# type: ignore
+
 from fastapi import APIRouter, WebSocket
 import json
+
 from classes.game import Game, games, GameState
-from classes.lines import lines
 
 router = APIRouter(prefix="/game", tags=["game"])
 
@@ -35,7 +37,8 @@ async def websocket_endpoint(websocket: WebSocket, game_code: str):
     # You must 'await' sending messages
     await websocket.send_text(f"Joined game with code: {game_code}")
 
-    game.lobby.unassigned.append(websocket)
+    if game.lobby is not None:
+        game.lobby.unassigned.append(websocket)
 
     try:
         while True:
@@ -50,7 +53,6 @@ async def websocket_endpoint(websocket: WebSocket, game_code: str):
             except Exception:
                 data_dict = {}
                 action = ""
-            print(data_dict)
 
             send = {}
             if data_dict and "action" in data_dict:
@@ -90,7 +92,7 @@ async def websocket_endpoint(websocket: WebSocket, game_code: str):
                     )
                     if game.lobby.can_start():
                         print("starting!")
-                        game.start_game()
+                        await game.start_game()
                         await game.broadcast(json.dumps({"action": "start"}))
                         # don't fall through to the per-connection send below
                         continue
@@ -102,20 +104,18 @@ async def websocket_endpoint(websocket: WebSocket, game_code: str):
                 if action == "bid":
                     # modify to be able to use any object
                     bid = data_dict["bid"]
-                    game.bid(bid, player, data_dict["amount"])
+                    obj = data_dict["biddable"]
+                    await game.get_contract_by_object(obj).add_bid(player, bid)
 
                 if action == "build":
                     line = data_dict["line"]
-                    lines[line].buildStation(data_dict["station"], player)
+                    await game.get_line_by_name(line).build_station()
 
                 if action == "end_turn":
                     player.end_turn = True
+                    await game.next_year()
 
-                send_data = {
-                    "game": game.serialize(),
-                    "player": player.serialize(),
-                    "lines": [line.serialize() for line in lines.values()],
-                }
+                send_data = {"game": game.serialize(), "player": player.serialize()}
 
                 send["game_data"] = send_data
             await websocket.send_text(json.dumps(send))

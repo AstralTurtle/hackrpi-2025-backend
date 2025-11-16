@@ -1,31 +1,26 @@
 # from asyncio.unix_events import SelectorEventLoop
 from fastapi import WebSocket
 
+INITIAL_MONEY: float = 1000
+
 
 class Player:
     def __init__(self, name: str):
         self.name = name
-        self.money = 0  # change to some inital
-        self.money_bidded = 0
-        self.WebSocket: WebSocket | None = None
+        self.money = INITIAL_MONEY
+
         self.end_turn: bool = False
 
-    def serialize(self) -> dict:
+        self.WebSocket: WebSocket | None = None
+
+    def serialize(self) -> dict[str, str | float]:
         return {
             "name": self.name,
             "money": self.money,
         }
 
-    # def addLine(self, line):
-    #     if self.money < line.price:
-    #         print("not enough money")
-    #         return
-    #     self.money -= line.price
-    #     self.lines.append(line.name)
-    #     line.bought = True
+    async def broadcast(self, message: str):
+        if self.WebSocket is None:
+            return
 
-    # if line.owner != None:
-    #     if higerbid():
-    #         pass
-
-    # pass
+        await self.WebSocket.send_text(message)

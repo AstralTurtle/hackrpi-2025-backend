@@ -1,9 +1,10 @@
 from fastapi import APIRouter
-from classes.lines import lines
+
+from classes.line import lines_data
 
 router = APIRouter(prefix="/health", tags=["health"])
 
 
 @router.get("/lines")
 def check_lines_loaded():
-    return lines
+    return lines_data
