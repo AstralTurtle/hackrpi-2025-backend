@@ -14,10 +14,10 @@ class Station:
         self.cost = round(random.uniform(1, 10), 1)
         self.revenue = round(random.uniform(1, 4), 1)
 
-    def serialize(self) -> dict[str, str | float | bool | None]:
+    def serialize(self):
         return {
             "id": self.id,
-            "owner": self.owner.name if self.owner is not None else None,
+            "owner": self.owner.serialize() if self.owner is not None else None,
             "awarded_year": self.awarded_year,
             "built": self.built,
             "cost": self.cost,
@@ -31,8 +31,9 @@ class Station:
         return obj == self.id
 
     async def build(self):
-        if self.owner is None:
-            raise ValueError("Station has no owner")
+        if self.owner is None or self.built:
+            return
+            # ValueError("Station has no owner")
 
         if self.owner.money < self.cost:
             await self.owner.broadcast(

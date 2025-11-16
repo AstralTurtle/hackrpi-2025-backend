@@ -16,8 +16,11 @@ class Contract:
         return {
             "biddable": self.biddable.serialize(),
             "highest_bid": self.highest_bid,
-            "highest_bidder": self.highest_bidder,
+            "highest_bidder": self.highest_bidder.serialize()
+            if self.highest_bidder is not None
+            else None,
             "deadline_year": self.deadline_year,
+            "type": self.type,
         }
 
     async def add_bid(self, bidder: Player, amount: int):
@@ -25,6 +28,7 @@ class Contract:
             await bidder.broadcast(
                 json.dumps({"notify": "You do not have enough money to bid."})
             )
+            return
 
         if amount > self.highest_bid:
             self.highest_bid = amount

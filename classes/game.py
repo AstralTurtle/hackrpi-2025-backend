@@ -31,7 +31,7 @@ class Game:
         self.code = str(uuid.uuid4())[:8]
         self.year: int = 1879
         self.turn: int = 0
-        self.lines: List[Line] = lines
+        self.lines: List[Line] = lines.copy()
         self.contracts: List[Contract] = []
 
     def serialize(self) -> dict[str, object]:
@@ -39,13 +39,17 @@ class Game:
             "code": self.code,
             "year": self.year,
             "turn": self.turn,
-            "lines": [line.serialize() for line in self.lines],
+            "lines": [
+                line.serialize()
+                for line in self.lines
+                if line.year <= (self.turn + 1) * 10 + 1880
+            ],
             "contracts": [contract.serialize() for contract in self.contracts],
         }
 
-    def get_contract_by_object(self, obj: Line | Station) -> Contract:
+    def get_contract_by_object(self, obj: str) -> Contract:
         return next(
-            (contract for contract in self.contracts if contract.biddable.isObj == obj)
+            (contract for contract in self.contracts if contract.biddable.isObj(obj))
         )
 
     async def start_game(self):

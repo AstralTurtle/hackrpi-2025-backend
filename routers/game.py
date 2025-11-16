@@ -26,16 +26,11 @@ async def websocket_endpoint(websocket: WebSocket, game_code: str):
     # If the game exists, get it
     game = games[game_code]
 
-    # Next, check if the game is full
-    if game.plr_count >= 2:
-        # Close the connection if the game is full
-        await websocket.close(code=1013)  # 1013 = Try Again Later (or 1000)
-        return
-
-    # If the game exists AND is not full, accept the connection
+    # Accept the connection first so we can communicate
     await websocket.accept()
-    # You must 'await' sending messages
-    await websocket.send_text(f"Joined game with code: {game_code}")
+
+    # Send welcome message
+    await websocket.send_text(json.dumps({"action": "joined", "code": game_code}))
 
     if game.lobby is not None:
         game.lobby.unassigned.append(websocket)
@@ -62,13 +57,38 @@ async def websocket_endpoint(websocket: WebSocket, game_code: str):
             # reply with the game_data for this websocket when the game is active.
             if not data_dict:
                 if game.state == GameState.Active:
-                    player = game.get_player_by_socket(websocket)
-                    send_data = {"game": game.serialize(), "player": player.serialize()}
-                    send["game_data"] = send_data
-                    await websocket.send_text(json.dumps(send))
-                    continue
+                    try:
+                        player = game.get_player_by_socket(websocket)
+                        send_data = {
+                            "game": game.serialize(),
+                            "player": player.serialize(),
+                        }
+                        send["game_data"] = send_data
+                        await websocket.send_text(json.dumps(send))
+                        continue
+                    except ValueError:
+                        # websocket not yet assigned to a player - send reconnect prompt
+                        send["action"] = "reconnect_required"
+                        send["game_data"] = {"game": game.serialize()}
+                        await websocket.send_text(json.dumps(send))
+                        continue
                 else:
                     send["game_data"] = {"game": game.serialize()}
+                    await websocket.send_text(json.dumps(send))
+                    continue
+
+            print(data_dict)
+            # Handle reconnection to an active game
+            if action == "reconnect" and game.state == GameState.Active:
+                team = data_dict.get("team", "").upper()
+                if team in game.players:
+                    # Reassign the websocket to the existing player
+                    game.players[team].WebSocket = websocket
+                    print(f"Player {team} reconnected")
+                    # Send them their current game state
+                    player = game.players[team]
+                    send_data = {"game": game.serialize(), "player": player.serialize()}
+                    send["game_data"] = send_data
                     await websocket.send_text(json.dumps(send))
                     continue
 
@@ -99,13 +119,26 @@ async def websocket_endpoint(websocket: WebSocket, game_code: str):
 
             if game.state == GameState.Active:
                 player = game.get_player_by_socket(websocket)
-                await websocket.send_text(f"Message text was: {data}")
 
                 if action == "bid":
-                    # modify to be able to use any object
-                    bid = data_dict["bid"]
-                    obj = data_dict["biddable"]
-                    await game.get_contract_by_object(obj).add_bid(player, bid)
+                    try:
+                        # modify to be able to use any object
+                        bid = data_dict["bid"]
+                        obj = data_dict["biddable"]
+                        print(
+                            f"Bid attempt: player={player.name}, bid={bid}, obj={obj}"
+                        )
+                        await game.get_contract_by_object(obj).add_bid(player, bid)
+                    except Exception as bid_error:
+                        import traceback
+
+                        print(f"Bid error: {type(bid_error).__name__}: {bid_error}")
+                        traceback.print_exc()
+                        send["error"] = (
+                            f"{type(bid_error).__name__}: {bid_error}"
+                            if str(bid_error)
+                            else type(bid_error).__name__
+                        )
 
                 if action == "build":
                     line = data_dict["line"]

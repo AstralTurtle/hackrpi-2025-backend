@@ -25,7 +25,7 @@ class Line:
             "name": self.name,
             "year": self.year,
             "stations": [station.serialize() for station in self.stations.values()],
-            "owner": self.owner,
+            "owner": self.owner.serialize() if self.owner is not None else None,
         }
 
     def set_owner(self, new_owner: Player | None):
