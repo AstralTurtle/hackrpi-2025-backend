@@ -3,16 +3,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from uvicorn.config import LOGGING_CONFIG
 
-from routers import game
+
+from routers import game, health
 
 app = FastAPI()
 app.include_router(game.router)
+app.include_router(health.router)
 
 origins = [
-    "http://localhost.tiangolo.com",
-    "https://localhost.tiangolo.com",
     "http://localhost",
     "http://localhost:8080",
+    "http://localhost:5173",
 ]
 
 app.add_middleware(
@@ -22,6 +23,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+
+
 
 if __name__ == "__main__":
     LOGGING_CONFIG["formatters"]["default"]["fmt"] = (

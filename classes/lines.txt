@@ -41,3 +41,30 @@ fulton elevated queens 1915
 lexington ave brooklyn 1885
 
 special world's fair 1939 end game bonus
+
+
+~1880: First elevated lines open
+~1890: More elevated lines
+~1900: First subway (underground line) opens
+~1910: Signing of Dual Contracts
+    - change how ownership works
+~1920: More dual contracts
+~1930: Start of government company (IND)
+~1940: End of private operations (game end)
+
+
+
+
+contracts : [
+    {
+        "name": "4th Avenue Line (BMT)",
+        "year": "1915-06-22",
+        "bidStation"=,
+        "stations": [
+        {
+        
+        }
+      ]
+    },
+
+]
